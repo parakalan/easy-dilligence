@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Dilligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            background-color: #333;
+            width: 200px;
+            transition: width 0.3s;
+            overflow: hidden;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar.collapsed {
+            width: 50px;
+        }
+
+        .sidebar .product-name {
+            color: white;
+            font-size: 24px;
+            font-family: 'Lato', sans-serif;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .sidebar.collapsed .product-name {
+            font-size: 18px;
+            display: block;
+            margin-top: 20px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar.collapsed a {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .sidebar a:hover {
+            background-color: #555;
+        }
+
+        .sidebar a span {
+            margin-left: 10px;
+        }
+
+        .sidebar.collapsed a span {
+            display: none;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .view {
+            display: none;
+            text-align: center;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        button, input[type="file"], input[type="text"] {
+            padding: 10px 20px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #333;
+        }
+
+        .progress {
+            width: 100%;
+            background-color: #f3f3f3;
+        }
+
+        .progress-bar {
+            width: 0px;
+            max-width: 600px;
+            margin-left: 25%;
+            height: 30px;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+
+        #searchResults {
+            padding: 8%;
+            text-align: justify;
+        }
+
+        #sources {
+            text-align: justify;
+            padding-left: 8%;
+        }
+
+        @keyframes spinZoom{
+            0%{
+                transform:rotate(0deg) scale(0);
+            }
+            50%{
+                transform:rotate(360deg) scale(0.6);
+            }
+            100%{
+                transform:rotate(720deg) scale(0);
+            }
+        }
+        .loader{
+            border:8px solid #2F4F4F;
+            border-top:8px solid #FF4500;
+            border-radius:50%;
+            width:80px;
+            height:80px;
+            animation:spinZoom 1s linear infinite;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="product-name">Easy Dilligence</div>
+            <!-- <a href="#" onclick="showView('index')"><i>📤</i><span>Index</span></a> -->
+            <a href="#" onclick="showView('search')"><i>🔎</i><span>Search</span></a>
+            
+        </div>
+        <div class="content">
+            <!-- Index View -->
+            <div class="view" id="index">
+                <h1>Index</h1>
+                <br><br>
+                <h3>This is where the user uploads the ZIP file which needs to be analysed.</h3>
+                <h3>Upload a zip file and click the Index button</h3>
+                <br><br><br><br>
+                <input type="file">
+                <button onclick="handleIndexing()">Index</button>
+                <br><br><br>
+                <div class="progress">
+                    <div class="progress-bar">0%</div>
+                </div>
+                <br><br><br>
+                <div style="text-align: left;margin: auto; width: 70%;" id="info">
+                </div>
+            </div>
+
+            <!-- Search View -->
+            <div class="view active" id="search">
+                <h1>Search</h1>
+                <h3>Search over the indexed files. Enter your natural language query here</h3>
+                <input id="searchQuery" style="width: 80%;" type="text" placeholder="Search...">
+                <button onclick="handleSearch()">Search</button>
+                <div style="margin: auto; display: none;" class="loader"></div>
+                <div id="searchResults"></div>
+                <div id="sources"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        let indexSessionId = generateUUID();
+        function showView(viewName) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewName).classList.add('active');
+        }
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('collapsed');
+
+            const productName = document.querySelector('.sidebar .product-name');
+            if (sidebar.classList.contains('collapsed')) {
+                productName.textContent = 'ED';
+            } else {
+                productName.textContent = 'Easy Dilligence';
+            }
+        }
+
+        async function handleIndexing() {
+            const fileInput = document.querySelector('input[type="file"]');
+            const file = fileInput.files[0];
+            const zip = await JSZip.loadAsync(file);
+            const files = Object.values(zip.files);
+            const progressBar = document.querySelector('.progress-bar');
+
+            
+
+            let totalCount = 0;
+            for (let i = 0; i < files.length; i++) {
+                if(files[i].dir == false && files[i].name.indexOf("__MACOSX") < 0) {
+                    totalCount += 1
+                }
+            }
+
+            let counter = 1;
+
+            for (let i = 0; i < files.length; i++) {
+                if(files[i].dir == false && files[i].name.indexOf("__MACOSX") < 0) {
+                    const blob = await files[i].async("blob");
+                    let formData = new FormData();
+                    formData.append('file', blob, files[i].name);
+                    formData.append('indexSessionId', indexSessionId);
+                    console.log("Indexing: ", files[i]);
+                    // Send the content to the API for indexing
+                    fetch('http://127.0.0.1:5000/index', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(response => {
+                        document.getElementById("info").innerHTML += '<br> Indexed: ' +  files[i].name
+                        // Update progress bar
+                        const progress = (counter / totalCount) * 600;
+                        counter += 1;
+                        progressBar.style.width = progress + 'px';
+                        progressBar.textContent = Math.round(progress/6) + '%';
+                    });
+                }
+            }
+        }
+
+        function handleSearch() {
+            // Get the query from the input field
+            const query = document.getElementById('searchQuery').value;
+
+            document.getElementsByClassName('loader')[0].style.display = "block";
+
+            // Make an AJAX call to /search with the query
+            fetch('http://127.0.0.1:5000/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: query})
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the search results here
+                console.log(data);  // For now, just log the results
+                document.getElementById("searchResults").innerHTML = "<strong>Answer</strong><br>" + data.answer
+                sourceHtml = '<strong>Sources:</strong><br>';
+                for(let i = 0; i < data.sources.length; i++) {
+                    sourceHtml += data.sources[i] + '<br>'
+                }
+                document.getElementById("sources").innerHTML = sourceHtml
+                document.getElementsByClassName('loader')[0].style.display = "none";
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+    </script>
+</body>
+
+</html>
