@@ -293,7 +293,9 @@
                 for(let i = 0; i < data.sources.length; i++) {
                     sourceHtml += data.sources[i] + '<br>'
                 }
-                document.getElementById("sources").innerHTML = sourceHtml
+                if(data.sources.length > 0) {
+                    document.getElementById("sources").innerHTML = sourceHtml
+                }
                 document.getElementsByClassName('loader')[0].style.display = "none";
 
             })
