@@ -271,6 +271,8 @@
         function handleSearch() {
             // Get the query from the input field
             const query = document.getElementById('searchQuery').value;
+            document.getElementById("searchResults").innerHTML = "";
+            document.getElementById("sources").innerHTML = "";
 
             document.getElementsByClassName('loader')[0].style.display = "block";
 
