@@ -251,7 +251,7 @@
                     formData.append('indexSessionId', indexSessionId);
                     console.log("Indexing: ", files[i]);
                     // Send the content to the API for indexing
-                    fetch('http://127.0.0.1:5000/index', {
+                    fetch('https://api.sudhar.xyz/index', {
                         method: 'POST',
                         body: formData
                     })
@@ -275,7 +275,7 @@
             document.getElementsByClassName('loader')[0].style.display = "block";
 
             // Make an AJAX call to /search with the query
-            fetch('http://127.0.0.1:5000/search', {
+            fetch('https://api.sudhar.xyz/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
